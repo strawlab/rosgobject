@@ -1,0 +1,4 @@
+python-gobject-introspection:
+  ubuntu: python-gi
+gir1.2-gtk-3.0:
+  ubuntu: gir1.2-gtk-3.0
