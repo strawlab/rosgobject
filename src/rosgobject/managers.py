@@ -1,10 +1,5 @@
 # -*- Mode: python; tab-width: 4; indent-tabs-mode: nil; indent-offset: 4 -*-
-import roslib;
-roslib.load_manifest('rosnode')
-roslib.load_manifest('rostopic')
-roslib.load_manifest('roslaunch')
-roslib.load_manifest('rospy')
-roslib.load_manifest('rosgraph_msgs')
+import roslib; roslib.load_manifest('rosgobject')
 
 import rospy
 import rosnode

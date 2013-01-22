@@ -1,4 +1,6 @@
 # -*- Mode: python; tab-width: 4; indent-tabs-mode: nil; indent-offset: 4 -*-
+import roslib; roslib.load_manifest('rosgobject')
+
 import logging
 
 from gi.repository import GObject, Gtk

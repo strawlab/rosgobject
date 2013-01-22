@@ -8,8 +8,13 @@
 
   <depend package="std_msgs"/>
   <depend package="geometry_msgs"/>
+
   <depend package="rospy"/>
   <depend package="rosmsg"/>
+  <depend package="rosnode"/>
+  <depend package="rostopic"/>
+  <depend package="roslaunch"/>
+  <depend package="rosgraph_msgs"/>
 
   <rosdep name="python-gobject-introspection"/>
   <rosdep name="gir1.2-gtk-3.0"/>
