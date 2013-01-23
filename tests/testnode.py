@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- Mode: python; tab-width: 4; indent-tabs-mode: nil; indent-offset: 4 -*-
 
-import roslib
-roslib.load_manifest('rospy')
-roslib.load_manifest('std_msgs')
+import roslib; roslib.load_manifest('rosgobject')
 
 import rospy
 import std_msgs.msg
