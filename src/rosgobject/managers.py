@@ -13,6 +13,7 @@ import time
 import threading
 import logging
 import random
+import platform
 
 from gi.repository import GObject
 
@@ -35,7 +36,7 @@ class ROSNodeManager(GObject.GObject):
                 str, str, str]),    #topic path, topic type, node path
             }
 
-    def __init__(self, this_machine):
+    def __init__(self, this_machine=None):
         GObject.GObject.__init__(self)
 
         self._log = LOG.getChild("ROSNodeManager")
@@ -43,6 +44,9 @@ class ROSNodeManager(GObject.GObject):
         self._nodes = []
         self._node_topics = {}
         self._topics = {}
+
+        if this_machine is None:
+            this_machine = platform.node()
 
         self._this_machine = this_machine
         self._thread = threading.Thread(target=self._thread_func)
