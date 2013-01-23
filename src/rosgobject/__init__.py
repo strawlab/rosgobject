@@ -6,6 +6,8 @@ import rospy
 import logging
 import threading
 
+from gi.repository import GLib, Gtk
+
 LOG = logging.getLogger(__name__)
 
 class _ROSThread(threading.Thread):
@@ -15,7 +17,15 @@ class _ROSThread(threading.Thread):
         LOG.getChild("ROSThread").info("creating thread")
         self.start()
 
+    def _check_running(self):
+        #this lets us die when the ROS thread dies
+        if not self.is_alive():
+            Gtk.main_quit()
+            return False
+        return True
+
     def run(self):
+        GLib.timeout_add(1000/10, self._check_running)
         LOG.getChild("ROSThread").info("calling rospy.spin")
         rospy.spin()
         LOG.getChild("ROSThread").info("rospy.spin() exited")
@@ -26,4 +36,8 @@ def get_ros_thread():
     if not rosgobject.__ros_thread:
         rosgobject.__ros_thread = _ROSThread()
     return rosgobject.__ros_thread
+
+def main_quit(*args):
+    Gtk.main_quit()
+    rospy.signal_shutdown('quit by GUI')
 
