@@ -38,6 +38,8 @@ def get_ros_thread():
     return rosgobject.__ros_thread
 
 def main_quit(*args):
-    Gtk.main_quit()
     rospy.signal_shutdown('quit by GUI')
+    Gtk.main_quit()
+    return False
+
 
