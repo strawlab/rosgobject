@@ -96,12 +96,19 @@ class GtkComboBoxTextPublisher(Gtk.ComboBoxText):
         self._pub.publish(msg)
 
 class GtkEntryTopicDisplay(Gtk.Entry):
-    def __init__(self, nodepath, msgclass, format_func=None, **kwargs):
+
+    name = None
+    nodepath = None
+
+    def __init__(self, nodepath, msgclass, format_func=None, name=None, **kwargs):
         Gtk.Entry.__init__(self, **kwargs)
         self._log = LOG.getChild("TopicDisplay+%s" % nodepath)
         self._sub = SubscriberGObject(nodepath, msgclass)
         self._sub.connect("message", self._on_message)
         self._format_func = format_func or str
+
+        self.name = name or nodepath
+        self.nodepath = nodepath
 
     def format_message(self, msg):
         try:
@@ -117,13 +124,17 @@ class GtkEntryTopicDisplay(Gtk.Entry):
 class ServiceWidget:
 
     widget = None
-    label = None
+    name = None
+    nodepath = None
 
-    def __init__(self, servicegobj):
+    def __init__(self, servicegobj, name=None):
         servicegobj.connect("node-error", self._on_node_error)
         servicegobj.connect("node-acquired", self._on_node_available)
         if self.widget:
             self.widget.set_sensitive(False)
+
+        self.name = name or servicegobj.nodepath
+        self.nodepath = servicegobj.nodepath
 
     def _on_node_available(self, node, name):
         if self.widget:

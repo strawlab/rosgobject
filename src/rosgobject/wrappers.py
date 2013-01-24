@@ -26,10 +26,10 @@ class _ServiceThread(threading.Thread):
         self.queue = Queue.Queue()
 
     def run(self):
-        LOG.getChild("ServiceThread").info("waiting for service: %s" % self.servicename)
+        self._log.info("waiting for service: %s" % self.servicename)
         rospy.wait_for_service(self.servicename)
         func = rospy.ServiceProxy(self.servicename, self.servicecls)
-        LOG.getChild("ServiceThread").info("acquired service: %s" % self.servicename)
+        self._log.info("acquired service: %s" % self.servicename)
         self._ab(self.servicename)
         while 1:
             args = tuple()
@@ -62,13 +62,16 @@ class ServiceGObject(GObject.GObject):
                 str,object])
             }
 
+    nodepath = None
+    node = None
+
     def __init__(self, servicecls, servicename, freq):
         GObject.GObject.__init__(self)
         LOG.getChild("ServiceGObject").info("wrapping %s %s @ %dHz" % (servicecls, servicename, freq))
-
         self.node = _ServiceThread(
                         servicecls, servicename,
                         freq, self._service_acquired, self._service_ok, self._service_err)
+        self.nodepath = servicename
         self.node.start()
 
     @property
@@ -92,10 +95,12 @@ class SubscriberGObject(GObject.GObject):
                 object])
             }
 
+    nodepath = None
+
     def __init__(self, nodepath, msg, subscribe=True):
         GObject.GObject.__init__(self)
         LOG.getChild("SubscriberGObject").info("wrapping %s msg %s" % (nodepath, msg))
-        self._nodepath = nodepath
+        self.nodepath = nodepath
         self._msg = msg
         self._sub = None
         if subscribe:
@@ -104,7 +109,7 @@ class SubscriberGObject(GObject.GObject):
     def subscribe(self):
         if self._sub:
             self.unsubscribe()
-        self._sub = rospy.Subscriber(self._nodepath, self._msg, self._cb)
+        self._sub = rospy.Subscriber(self.nodepath, self._msg, self._cb)
 
     def unsubscribe(self):
         if self._sub:
