@@ -5,6 +5,7 @@ import roslib; roslib.load_manifest('rosgobject')
 
 import rospy
 import std_msgs.msg
+import std_srvs.srv
 
 import random
 import string
@@ -19,8 +20,15 @@ class Tester:
             self._pubs.append( p )
             self._pubst[p] = t
 
+        self._fs = rospy.Publisher("~foo",std_msgs.msg.Float32)
+        s = rospy.Service('~set_foo', std_srvs.srv.Empty, self._change_foo)
+
         self._timer = rospy.Timer(rospy.Duration(0.2),
                                     self._new_msg)
+
+    def _change_foo(self, req):
+        self._fs.publish(random.random())
+        return std_srvs.srv.EmptyResponse()
 
     def _new_msg(self, evt):
         p = random.choice( self._pubs )
