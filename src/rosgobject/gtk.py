@@ -4,6 +4,8 @@ import roslib; roslib.load_manifest('rosgobject')
 import logging
 import math
 
+import rospy
+
 from gi.repository import GObject, Gtk
 
 from rosgobject.wrappers import SubscriberGObject
@@ -65,6 +67,33 @@ class ROSTopicListModel(Gtk.ListStore):
         if not self._only_topic_types or topictype in self._only_topic_types:
             iter_ = self._iters.pop("topic_"+topicpath+nodepath)
             self.remove(iter_)
+
+class GtkComboBoxTextPublisher(Gtk.ComboBoxText):
+
+    name = None
+    nodepath = None
+
+    def __init__(self, nodepath, msgclass, options, type_conv_func=str, latch=False, name=None, **kwargs):
+        Gtk.ComboBoxText.__init__(self, **kwargs)
+        for o in options:
+            self.append_text(o)
+        self.connect("changed", self._on_combo_changed)
+
+        self._msgclass = msgclass
+        self._tconv = type_conv_func
+        self._pub = rospy.Publisher(nodepath, msgclass, latch=latch)
+
+        self.name = name or nodepath
+        self.nodepath = self._pub.resolved_name
+
+    def _on_combo_changed(self, c):
+        txt = self.get_active_text()
+        ret = self._tconv(txt)
+        if type(ret) in (list,tuple):
+            msg = self._msgclass(*ret)
+        else:
+            msg = self._msgclass(ret)
+        self._pub.publish(msg)
 
 class GtkEntryTopicDisplay(Gtk.Entry):
     def __init__(self, nodepath, msgclass, format_func=None, **kwargs):
