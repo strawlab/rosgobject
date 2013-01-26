@@ -8,7 +8,7 @@ import rospy
 
 from gi.repository import GObject, Gtk
 
-from rosgobject.wrappers import SubscriberGObject
+from rosgobject.core import SubscriberGObject
 
 LOG = logging.getLogger(__name__)
 
@@ -67,81 +67,6 @@ class ROSTopicListModel(Gtk.ListStore):
         if not self._only_topic_types or topictype in self._only_topic_types:
             iter_ = self._iters.pop("topic_"+topicpath+nodepath)
             self.remove(iter_)
-
-class GtkComboBoxTextPublisher(Gtk.ComboBoxText):
-
-    name = None
-    nodepath = None
-
-    def __init__(self, nodepath, msgclass, options, type_conv_func=str, latch=False, name=None, **kwargs):
-        Gtk.ComboBoxText.__init__(self, **kwargs)
-        for o in options:
-            self.append_text(o)
-        self.connect("changed", self._on_combo_changed)
-
-        self._msgclass = msgclass
-        self._tconv = type_conv_func
-        self._pub = rospy.Publisher(nodepath, msgclass, latch=latch)
-
-        self.name = name or nodepath
-        self.nodepath = self._pub.resolved_name
-
-    def _on_combo_changed(self, c):
-        txt = self.get_active_text()
-        ret = self._tconv(txt)
-        if type(ret) in (list,tuple):
-            msg = self._msgclass(*ret)
-        else:
-            msg = self._msgclass(ret)
-        self._pub.publish(msg)
-
-class GtkEntryTopicDisplay(Gtk.Entry):
-
-    name = None
-    nodepath = None
-
-    def __init__(self, nodepath, msgclass, format_func=None, name=None, **kwargs):
-        Gtk.Entry.__init__(self, **kwargs)
-        self._log = LOG.getChild("TopicDisplay+%s" % nodepath)
-        self._sub = SubscriberGObject(nodepath, msgclass)
-        self._sub.connect("message", self._on_message)
-        self._format_func = format_func or str
-
-        self.name = name or nodepath
-        self.nodepath = nodepath
-
-    def format_message(self, msg):
-        try:
-            txt = self._format_func(msg)
-        except:
-            self._log.warn("Error calling format function", exc_info=True)
-            txt = str(msg)
-        return txt
-
-    def _on_message(self, sub, msg):
-        self.set_text(self.format_message(msg))
-
-class ServiceWidget:
-
-    widget = None
-    name = None
-    nodepath = None
-
-    def __init__(self, servicegobj, name=None):
-        servicegobj.connect("node-error", self._on_node_error)
-        servicegobj.connect("node-acquired", self._on_node_available)
-        if self.widget:
-            self.widget.set_sensitive(False)
-
-        self.name = name or servicegobj.nodepath
-        self.nodepath = servicegobj.nodepath
-
-    def _on_node_available(self, node, name):
-        if self.widget:
-            self.widget.set_sensitive(True)
-
-    def _on_node_error(self, go, name, res):
-        pass
 
 class UpdateableGtkSwitch(Gtk.Switch):
     def __init__(self, *args, **kwargs):
