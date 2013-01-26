@@ -20,10 +20,10 @@ class Tester:
             self._pubs.append( p )
             self._pubst[p] = t
 
-        self._fs = rospy.Publisher("~foo",std_msgs.msg.Float32)
-        s = rospy.Service('~set_foo', std_srvs.srv.Empty, self._change_foo)
+        self._fs = rospy.Publisher("~change_on_service_call",std_msgs.msg.Float32)
+        s = rospy.Service('~empty_service', std_srvs.srv.Empty, self._change_foo)
 
-        self._timer = rospy.Timer(rospy.Duration(0.2),
+        self._timer = rospy.Timer(rospy.Duration(rospy.get_param("~t",0.2)),
                                     self._new_msg)
 
     def _change_foo(self, req):
