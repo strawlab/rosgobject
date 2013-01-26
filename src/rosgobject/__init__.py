@@ -45,4 +45,11 @@ def main_quit(*args):
     Gtk.main_quit()
     return False
 
+def add_console_logger(level=logging.INFO, logger=''):
+    #also redirect logging to stderr
+    console = logging.StreamHandler()
+    console.setLevel(level)
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger(logger).addHandler(console)
 
