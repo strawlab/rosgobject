@@ -16,8 +16,9 @@ LOG = logging.getLogger(__name__)
 class _ROSThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self, name="Thread-rospy.spin")
-        self.daemon = True
-        LOG.getChild("ROSThread").info("creating thread")
+        self.daemon = False #insist we must be shut down properly (use rosgobject.main_quit)
+        self._log = LOG.getChild("ROSThread")
+        self._log.debug("creating rospy.spin() thread")
         self.start()
 
     def _check_running(self):
@@ -29,9 +30,8 @@ class _ROSThread(threading.Thread):
 
     def run(self):
         GLib.timeout_add(1000/10, self._check_running)
-        LOG.getChild("ROSThread").info("calling rospy.spin")
         rospy.spin()
-        LOG.getChild("ROSThread").info("rospy.spin() exited")
+        self._log.info("rospy.spin() exited")
 
 __ros_thread = None
 def get_ros_thread():
