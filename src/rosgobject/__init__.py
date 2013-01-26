@@ -6,7 +6,10 @@ import rospy
 import logging
 import threading
 
-from gi.repository import GLib, Gtk
+from gi.repository import GLib, Gtk, GObject, Gdk
+
+GObject.threads_init()
+Gdk.threads_init()
 
 LOG = logging.getLogger(__name__)
 
