@@ -40,6 +40,10 @@ def get_ros_thread():
         rosgobject.__ros_thread = _ROSThread()
     return rosgobject.__ros_thread
 
+__parameter_lock = threading.Lock()
+def get_parameter_lock():
+    return __parameter_lock
+
 def main_quit(*args):
     rospy.signal_shutdown('quit by GUI')
     Gtk.main_quit()
