@@ -83,6 +83,9 @@ class Plotter(Gtk.Box):
         self._vy = int(ymax)
         self._my = int(ymin)
 
+        self._xsb = None
+        self._ysb = None
+
         figure = mpl.Figure()
         self._plt = figure.add_subplot(111)
         self._canvas = mpl.FigureCanvas(figure)
@@ -102,8 +105,34 @@ class Plotter(Gtk.Box):
     def ax(self):
         return self._plt
 
+    @property
+    def xlabel_controller(self):
+        if self._xsb is None:
+            self._xsb = Gtk.SpinButton.new_with_range(self._time[0], self._time[-1], self._interval)
+            self._xsb.props.value = self._time[0]
+            self._xsb.connect("value-changed", self._on_val_changed, 'x')
+        return self._xsb
+
+    @property
+    def ylabel_controller(self):
+        if self._ysb is None:
+            self._ysb = Gtk.SpinButton.new_with_range(1, 1000000, 1)
+            self._ysb.props.value = self._vy
+            self._ysb.connect("value-changed", self._on_val_changed, 'y')
+        return self._ysb
+
     def _cb(self, msg):
         self._data_func(self.coll, msg)
+
+    def _on_val_changed(self, sb, ident):
+        if ident == 'y':
+            self._vy = sb.get_value()
+            self._plt.set_ylim(self._my, self._vy)
+            self._update_data()
+        if ident == 'x':
+            self._vx = sb.get_value()
+            self._plt.set_xlim(self._vx,0)
+            self._update_data()
 
     def _update_data(self):
         b = self.coll.get_data()
