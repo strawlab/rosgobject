@@ -102,6 +102,10 @@ class Plotter(Gtk.Box):
         GLib.timeout_add(freq, self._update_data)
 
     @property
+    def canvas(self):
+        return self._canvas
+
+    @property
     def ax(self):
         return self._plt
 
