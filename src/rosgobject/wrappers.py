@@ -62,6 +62,12 @@ class ParamWidget(_MagicLabel):
     def show_parameter(self, val):
         raise NotImplementedError
 
+    def show_all(self):
+        if self.widget is not None:
+            self.widget.show_all()
+        if self._label is not None:
+            self._label.show_all()
+
 class GtkEntryViewParam(ParamWidget):
     def __init__(self, format_func=None, **kwargs):
         if "widget" not in kwargs:
@@ -108,6 +114,12 @@ class PublisherWidget(_MagicLabel):
     def publish_message(self, *args):
         msg = self._msgclass(*args)
         self._pub.publish(msg)
+
+    def show_all(self):
+        if self.widget is not None:
+            self.widget.show_all()
+        if self._label is not None:
+            self._label.show_all()
 
 class GtkComboBoxTextPublisherWidget(PublisherWidget):
     def __init__(self, **kwargs):
@@ -183,6 +195,12 @@ class ServiceWidget(_MagicLabel):
     def service_call(self, *args):
         self._node.queue.put(args)
 
+    def show_all(self):
+        if self.widget is not None:
+            self.widget.show_all()
+        if self._label is not None:
+            self._label.show_all()
+
 class GtkButtonSetServiceWidget(ServiceWidget):
     def __init__(self, nodepath, srvclass, **kwargs):
         _add_name = False
@@ -217,6 +235,12 @@ class TopicWidget(_MagicLabel):
 
     def set_message(self, msg):
         raise NotImplementedError
+
+    def show_all(self):
+        if self.widget is not None:
+            self.widget.show_all()
+        if self._label is not None:
+            self._label.show_all()
 
 class GtkEntryTopicWidget(TopicWidget):
     def __init__(self, format_func=None, **kwargs):
