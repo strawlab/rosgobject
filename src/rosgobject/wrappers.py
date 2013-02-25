@@ -212,11 +212,22 @@ class GtkButtonSetServiceWidget(ServiceWidget):
     def _on_clicked(self, btn):
         self.service_call()
 
-class TopicWidget(_MagicLabel):
+class GtkSpinButtonServiceWidget(ServiceWidget):
 
-    widget = None
-    name = None
-    nodepath = None
+    def __init__(self, nodepath, srvclass, **kwargs):
+        if "widget" not in kwargs:
+            kwargs.update(
+                widget=Gtk.SpinButton.new_with_range(
+                            kwargs["min"],kwargs["max"],kwargs["step"]))
+        gobj = ServiceGObject(srvclass, nodepath, 0.0)
+        ServiceWidget.__init__(self, gobj, **kwargs)
+        self.widget.connect("value-changed", self._on_changed)
+
+    def _on_changed(self, widget):
+        val = self.conv_func(widget.props.value) if self.conv_func is not None else widget.props.value
+        self.service_call(val)
+
+class TopicWidget(_MagicLabel):
 
     def __init__(self, widget, nodepath, msgclass, name=None):
         self._log = LOG.getChild("TopicWidget+%s" % nodepath)
