@@ -3,6 +3,7 @@ import roslib; roslib.load_manifest('rosgobject')
 
 import argparse
 import logging
+import traceback
 
 import rospy
 import std_msgs.msg
@@ -125,6 +126,11 @@ if __name__ == "__main__":
     rospy.init_node("testgui", anonymous=True)
     rosgobject.get_ros_thread() #ensure ros is spinning
     rosgobject.add_console_logger()
-    u = UI()
-    Gtk.main()
+    try:
+        u = UI()
+        Gtk.main()
+    except:
+        rospy.logfatal("crash in UI:\n%s" % traceback.format_exc())
+    finally:
+        rosgobject.main_quit()
 
