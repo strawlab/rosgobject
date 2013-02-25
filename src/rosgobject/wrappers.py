@@ -31,6 +31,9 @@ def get_std_msgs_python_type(msgclass):
 
 class _MagicLabel(object):
 
+    widget = None
+    name = None
+    nodepath = None
     _label = None
 
     @property
@@ -39,11 +42,13 @@ class _MagicLabel(object):
             self._label = Gtk.Label(self.name, xalign=0.0)
         return self._label
 
-class ParamWidget(_MagicLabel):
+    def show_all(self):
+        if self.widget is not None:
+            self.widget.show_all()
+        if self._label is not None:
+            self._label.show_all()
 
-    widget = None
-    name = None
-    nodepath = None
+class ParamWidget(_MagicLabel):
 
     def __init__(self, widget, nodepath, name=None, **kwargs):
         self._node = ParameterGObject(nodepath)
@@ -61,12 +66,6 @@ class ParamWidget(_MagicLabel):
 
     def show_parameter(self, val):
         raise NotImplementedError
-
-    def show_all(self):
-        if self.widget is not None:
-            self.widget.show_all()
-        if self._label is not None:
-            self._label.show_all()
 
 class GtkEntryViewParam(ParamWidget):
     def __init__(self, format_func=None, **kwargs):
@@ -98,9 +97,6 @@ class GtkSpinButtonParam(ParamWidget):
 
 class PublisherWidget(_MagicLabel):
 
-    widget = None
-    name = None
-    nodepath = None
     conv_func = None
 
     def __init__(self, widget, nodepath, msgclass, conv_func=None, latch=False, name=None, **kwargs):
@@ -166,14 +162,13 @@ class GtkButtonPublisherWidget(PublisherWidget):
 
 class ServiceWidget(_MagicLabel):
 
-    widget = None
-    name = None
-    nodepath = None
+    conv_func=None
 
-    def __init__(self, servicegobj, widget=None, name=None):
+    def __init__(self, servicegobj, widget=None, name=None, conv_func=None, **kwargs):
         self.widget = widget
         self.nodepath = servicegobj.nodepath
         self.name = name or self.nodepath
+        self.conv_func = conv_func
         self._node = servicegobj
 
         self._log = LOG.getChild("ServiceWidget+%s" % self.nodepath)
@@ -202,6 +197,7 @@ class ServiceWidget(_MagicLabel):
             self._label.show_all()
 
 class GtkButtonSetServiceWidget(ServiceWidget):
+
     def __init__(self, nodepath, srvclass, **kwargs):
         _add_name = False
         if "widget" not in kwargs:
@@ -279,10 +275,6 @@ class GtkImageTopicWidget(TopicWidget):
 
 class GtkButtonKillNode(_MagicLabel):
 
-    widget = None
-    name = None
-    nodepath = None
-
     def __init__(self, widget=None, nodemanager=None, nodepath=None, name=None):
         assert nodemanager is not None
         assert nodepath is not None
@@ -309,10 +301,6 @@ class GtkButtonKillNode(_MagicLabel):
         self._nodemanager.kill_nodes(self.nodepath)
 
 class GtkButtonStartNode(_MagicLabel):
-
-    widget = None
-    name = None
-    nodepath = None
 
     def __init__(self, widget=None, nodemanager=None, nodepath=None, package=None, node_type=None, machine_name='', name=None, **kwargs):
         assert nodemanager is not None
