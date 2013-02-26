@@ -61,7 +61,7 @@ class FIFO(object):
         return data
 
 class Plotter(Gtk.Box):
-    def __init__(self, nodepath, msgclass, data_func=None, N=300, ymax=1.0, ymin=0.0, binning=1, dtype=np.float, freq=20):
+    def __init__(self, nodepath, msgclass, data_func=None, N=300, ymax=1.0, ymin=0.0, binning=1, dtype=np.float, freq=20, data_update_interval_us=1000000.0):
         Gtk.Box.__init__(self, orientation=Gtk.Orientation.VERTICAL)
 
         self._N = int(N)
@@ -74,11 +74,9 @@ class Plotter(Gtk.Box):
 
         self.coll = FIFO(self._N, self._dtype, self._bin)
 
-        interval = 1.0
-        level=-1.0
-
-        self._interval = float(interval*(10**level)*10)
+        self._interval = float(data_update_interval_us)*1e-6
         self._time = np.arange(-1*N,0,self._bin)*self._interval
+        
         self._vx = self._time[0]
         self._vy = int(ymax)
         self._my = int(ymin)
@@ -112,7 +110,7 @@ class Plotter(Gtk.Box):
     @property
     def xlabel_controller(self):
         if self._xsb is None:
-            self._xsb = Gtk.SpinButton.new_with_range(self._time[0], self._time[-1], self._interval)
+            self._xsb = Gtk.SpinButton.new_with_range(self._time[0], self._time[-1], self._bin*self._interval)
             self._xsb.props.value = self._time[0]
             self._xsb.connect("value-changed", self._on_val_changed, 'x')
         return self._xsb
