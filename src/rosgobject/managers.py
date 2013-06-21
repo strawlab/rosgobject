@@ -141,6 +141,9 @@ class ROSNodeManager(GObject.GObject):
     def _random_node_name(self, N, prefix=""):
         return prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(N))
 
+    def has_topic(self, name):
+        return name in self._topics
+
     def kill_nodes(self, *nodes):
         rosnode.kill_nodes(nodes)
 
