@@ -1,18 +1,60 @@
 # -*- Mode: python; tab-width: 4; indent-tabs-mode: nil; indent-offset: 4 -*-
 import roslib; roslib.load_manifest('rosgobject')
-
+import roslib.scriptutil
+import roslib.names
 import rospy
 
 import logging
 import threading
 import Queue
 import time
+import sys
 
 from gi.repository import GObject
 
 import rosgobject
 
 LOG = logging.getLogger(__name__)
+
+## from rxplot
+##
+## subroutine for getting the topic type
+## (nearly identical to rostopic._get_topic_type, except it returns rest of name instead of fn)
+## @return str, str, str: topic type, real topic name, and rest of name referenced
+## if the \a topic points to a field within a topic, e.g. /rosout/msg
+def _get_topic_type(topic):
+    code, msg, val = roslib.scriptutil.get_master().getPublishedTopics('/', '/')
+    if code != 1:
+        raise Exception("unable to get list of topics from master")
+    matches = [(t, t_type) for t, t_type in val if t == topic or topic.startswith(t+'/')]
+    if matches:
+        t, t_type = matches[0]
+        if t_type == roslib.names.ANYTYPE:
+            return None, None, None
+        if t_type == topic:
+            return t_type, None
+        return t_type, t, topic[len(t):]
+    else:
+        return None, None, None
+
+## from rxplot
+##
+## get the topic type (nearly identical to rostopic.get_topic_type, except it doesn't return a fn)
+## @return str, str, str: topic type, real topic name, and rest of name referenced
+## if the \a topic points to a field within a topic, e.g. /rosout/msg
+def get_topic_type(topic):
+    topic_type, real_topic, rest = _get_topic_type(topic)
+    if topic_type:
+        return topic_type, real_topic, rest
+    else:
+        print >> sys.stderr, "WARNING: topic [%s] does not appear to be published yet"%topic
+        while not rospy.is_shutdown():
+            topic_type, real_topic, rest = _get_topic_type(topic)
+            if topic_type:
+                return topic_type, real_topic, rest
+            else:
+                time.sleep(0.1)
+        return None, None, None
 
 class _ParameterPollThread(threading.Thread):
     def __init__(self, path, freq, existscallback, changecallback):
