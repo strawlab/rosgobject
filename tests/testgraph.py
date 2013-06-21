@@ -14,7 +14,6 @@ from gi.repository import Gtk
 
 class UI:
     def __init__(self):
-        me = os.path.dirname(os.path.abspath(__file__))
         self._w = Gtk.Window()
         self._build_ui()
         self._w.connect("delete-event", rosgobject.main_quit)
