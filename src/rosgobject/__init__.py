@@ -57,3 +57,20 @@ def add_console_logger(level=logging.INFO, logger=''):
     console.setFormatter(formatter)
     logging.getLogger(logger).addHandler(console)
 
+#rospy API compatibility
+from . import core
+Subscriber = core.SubscriberGObject
+
+def init_node(*args, **kwargs):
+    rospy.init_node(*args, **kwargs)
+    get_ros_thread()
+
+def spin():
+    try:
+        Gtk.main()
+    except:
+        rospy.logfatal("crash in UI:\n%s" % traceback.format_exc())
+    finally:
+        main_quit()    
+
+

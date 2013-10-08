@@ -26,6 +26,8 @@ class Tester:
         self._timer = rospy.Timer(rospy.Duration(rospy.get_param("~t",0.2)),
                                     self._new_msg)
 
+        self._verbose = int(rospy.get_param("~verbose","1"))
+
     def _change_foo(self, req):
         self._fs.publish(random.random())
         return std_srvs.srv.EmptyResponse()
@@ -42,7 +44,8 @@ class Tester:
         elif type(msg.data) == str:
             msg.data = ''.join(random.choice(string.ascii_letters) for i in range(10))
         p.publish(msg)
-        print msg
+        if self._verbose:
+            print msg
 
 if __name__ == "__main__":
     rospy.init_node('testnode')
