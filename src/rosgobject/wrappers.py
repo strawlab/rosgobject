@@ -62,7 +62,7 @@ class ParamWidget(_MagicLabel):
         #this gets flipped to true if the param does exist later
         #in the _on_parameter_exists cb
         self.widget.set_sensitive(
-                True if kwargs.get('can_create', False) else False)
+                False if kwargs.get('must_exist', True) else True)
 
     def _on_parameter_exists(self, node, path):
         self.widget.set_sensitive(True)
@@ -86,7 +86,7 @@ class GtkEntryViewParam(ParamWidget):
 class GtkEntryChangeParam(GtkEntryViewParam):
     def __init__(self, format_func=None, **kwargs):
         kwargs.update(widget=UpdateableGtkEntry(),
-                      can_create=True)
+                      must_exist=False)
         GtkEntryViewParam.__init__(self, format_func, **kwargs)
 
         self.widget.connect("changed", self._on_text_changed)
