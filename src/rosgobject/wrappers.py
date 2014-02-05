@@ -8,7 +8,7 @@ import math
 from gi.repository import GObject, Gtk
 
 from rosgobject.core import ServiceGObject, SubscriberGObject, ParameterGObject
-from rosgobject.gtk import UpdateableGtkSpinButton
+from rosgobject.gtk import UpdateableGtkSpinButton, UpdateableGtkEntry
 
 LOG = logging.getLogger(__name__)
 
@@ -58,6 +58,9 @@ class ParamWidget(_MagicLabel):
         self.nodepath = nodepath
         self.name = name or self.nodepath
 
+        self.widget.set_sensitive(
+                True if kwargs.get('can_create', False) else False)
+
     def _on_parameter_exists(self, node, path):
         self.widget.set_sensitive(True)
 
@@ -70,12 +73,23 @@ class ParamWidget(_MagicLabel):
 class GtkEntryViewParam(ParamWidget):
     def __init__(self, format_func=None, **kwargs):
         if "widget" not in kwargs:
-            kwargs.update(widget=Gtk.Entry(editable=False, sensitive=False))
+            kwargs.update(widget=Gtk.Entry(editable=False))
         ParamWidget.__init__(self, **kwargs)
         self._format_func = format_func or str
 
     def show_parameter(self, val):
         self.widget.set_text(self._format_func(val))
+
+class GtkEntryChangeParam(GtkEntryViewParam):
+    def __init__(self, format_func=None, **kwargs):
+        kwargs.update(widget=UpdateableGtkEntry(),
+                      can_create=True)
+        GtkEntryViewParam.__init__(self, format_func, **kwargs)
+
+        self.widget.connect("changed", self._on_text_changed)
+
+    def _on_text_changed(self, e):
+        self._node.set_param(self._format_func(e.get_text()))
 
 class GtkSpinButtonParam(ParamWidget):
     def __init__(self, conv_func=None, **kwargs):
@@ -84,7 +98,6 @@ class GtkSpinButtonParam(ParamWidget):
                                         min=kwargs["min"],
                                         max=kwargs["max"],
                                         step=kwargs["step"]))
-            kwargs["widget"].set_sensitive(False)
         ParamWidget.__init__(self, **kwargs)
         self._conv_func = conv_func or float
         self.widget.connect("value-changed", self._on_val_changed)

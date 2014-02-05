@@ -6,7 +6,7 @@ import math
 
 import rospy
 
-from gi.repository import GObject, Gtk
+from gi.repository import GObject, Gtk, Gdk
 
 from rosgobject.core import SubscriberGObject
 
@@ -67,6 +67,39 @@ class ROSTopicListModel(Gtk.ListStore):
         if not self._only_topic_types or topictype in self._only_topic_types:
             iter_ = self._iters.pop("topic_"+topicpath+nodepath)
             self.remove(iter_)
+
+class UpdateableGtkEntry(Gtk.Entry):
+    def __init__(self, *args, **kwargs):
+        Gtk.Entry.__init__(self, *args, **kwargs)
+        self.add_events(Gdk.EventMask.FOCUS_CHANGE_MASK)
+        self._focused = False
+        self._ros_txt = ""
+        self.connect_after("focus-in-event", self._focus_in)
+        self.connect_after("focus-out-event", self._focus_out)
+
+    def _focus_in(self, *args):
+        self._focused = True
+
+    def _focus_out(self, *args):
+        self.set_icon_from_stock(Gtk.EntryIconPosition.SECONDARY, None)
+        self._focused = False
+        if self._ros_txt:
+            self.set_text(self._ros_txt, take_my_changes=True)
+
+    def set_text(self, txt, take_my_changes=False):
+        if take_my_changes:
+            Gtk.Entry.set_text(self, txt)
+            self._ros_txt = ""
+        elif self._focused and (self.get_text() != txt):
+            self._ros_txt = txt
+            self.set_icon_from_stock(Gtk.EntryIconPosition.SECONDARY,
+                                     Gtk.STOCK_INFO)
+            self.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY,
+                                       "This parameter changed while you were "\
+                                       "editing it")
+        else:
+            self._ros_txt = ""
+            Gtk.Entry.set_text(self, txt)
 
 class UpdateableGtkSwitch(Gtk.Switch):
     def __init__(self, *args, **kwargs):

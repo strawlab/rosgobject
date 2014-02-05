@@ -86,9 +86,6 @@ class UI:
         self._add_widget(w)
 
         w = GtkEntryViewParam(
-                nodepath="/param_a")
-        self._add_widget(w)
-        w = GtkEntryViewParam(
                 nodepath="/param_b")
         self._add_widget(w)
         w = GtkSpinButtonParam(
@@ -96,6 +93,12 @@ class UI:
                 min=0.5,
                 max=5,
                 step=0.01)
+        self._add_widget(w)
+        w = GtkEntryViewParam(
+                nodepath="/param_a")
+        self._add_widget(w)
+        w = GtkEntryChangeParam(
+                nodepath="/param_a")
         self._add_widget(w)
 
         w = GtkButtonKillNode(
