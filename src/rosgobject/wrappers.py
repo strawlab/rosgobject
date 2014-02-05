@@ -329,11 +329,8 @@ class GtkButtonKillNode(_MagicLabel):
 
 class GtkButtonStartNode(_MagicLabel):
 
-    def __init__(self, widget=None, nodemanager=None, nodepath=None, package=None, node_type=None, machine_name='', name=None, **kwargs):
+    def __init__(self, widget=None, nodemanager=None, nodepath=None, package=None, node_type=None, name=None, **kwargs):
         assert nodemanager is not None
-        assert nodepath is not None
-        assert package is not None
-        assert node_type is not None
         self.nodepath = nodepath
         self.name = name or self.nodepath
         if widget is None:
@@ -343,15 +340,33 @@ class GtkButtonStartNode(_MagicLabel):
         self._nodemanager = nodemanager
         self._package = package
         self._node_type = node_type
-        self._machine_name = machine_name
+
+        #also support getting kwargs via callback at runtime
+        self._kwargs_callback = kwargs.pop('launch_callback', None)
         self._kwargs = kwargs
 
     def _on_clicked(self, *args):
-        self._nodemanager.launch_node(
-                            package=self._package,
-                            node_type=self._node_type,
-                            machine_name=self._machine_name,
-                            name=self.nodepath,
-                            **self._kwargs)
+        kwargs = dict(package=self._package,
+                      node_type=self._node_type,
+                      nodepath=self.nodepath)
 
+        if self._kwargs_callback:
+            kwargs.update(self._kwargs_callback())
+        if self._kwargs:
+            kwargs.update(self._kwargs)
+
+        #launching on remote machines was never working
+        kwargs.pop('machine_name', None)
+
+        for k in ("nodepath","package","node_type"):
+            if not kwargs[k]:
+                raise Exception("Cannot launch node. %s must be set at "\
+                                "construction or in launch_callback" % k)
+
+        #grr I re-use name for the MagicLabel, but the user must
+        #fill nodepath. name is the ros api for the node name
+        np = kwargs.pop('nodepath')
+        kwargs['name'] = np
+
+        self._nodemanager.launch_node(**kwargs)
 

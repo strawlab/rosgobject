@@ -119,6 +119,14 @@ class UI:
                 name="Start /newtestnode")
         self._add_widget(w)
 
+        w = GtkButtonStartNode(
+                nodemanager=self._manager,
+                package="rosgobject",
+                node_type="testnode.py",
+                name="Start /newtestnode (launch cb)",
+                launch_callback=lambda : {"nodepath":"newtestnode"})
+        self._add_widget(w)
+
         w = GtkButtonSetServiceWidget(
                 nodepath="/testnode/empty_service",
                 srvclass=std_srvs.srv.Empty,
