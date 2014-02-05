@@ -51,13 +51,16 @@ class _MagicLabel(object):
 class ParamWidget(_MagicLabel):
 
     def __init__(self, widget, nodepath, name=None, **kwargs):
-        self._node = ParameterGObject(nodepath)
+        self._node = ParameterGObject(nodepath,
+                                      create=kwargs.pop('create',None))
         self._node.connect("parameter-exists", self._on_parameter_exists)
         self._node.connect("parameter-changed", self._on_parameter_changed)
         self.widget = widget
         self.nodepath = nodepath
         self.name = name or self.nodepath
 
+        #this gets flipped to true if the param does exist later
+        #in the _on_parameter_exists cb
         self.widget.set_sensitive(
                 True if kwargs.get('can_create', False) else False)
 

@@ -100,6 +100,10 @@ class UI:
         w = GtkEntryChangeParam(
                 nodepath="/param_a")
         self._add_widget(w)
+        w = GtkEntryChangeParam(
+                nodepath="/param_c",
+                create="created")
+        self._add_widget(w)
 
         w = GtkButtonKillNode(
                 nodepath="/newtestnode",

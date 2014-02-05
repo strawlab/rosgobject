@@ -57,12 +57,13 @@ def get_topic_type(topic):
         return None, None, None
 
 class _ParameterPollThread(threading.Thread):
-    def __init__(self, path, freq, existscallback, changecallback):
+    def __init__(self, path, freq, existscallback, changecallback, create=None):
         threading.Thread.__init__(self, name="ParameterThread-%s" % path)
         self._path = path
         self._freq = freq
         self._existscallback = existscallback
         self._changecallback = changecallback
+        self._create = create
         self._log = LOG.getChild("ParameterThread")
         self._log.info("wrapping %s @ %dHz" % (self._path, self._freq))
         self._val = None
@@ -86,13 +87,22 @@ class _ParameterPollThread(threading.Thread):
                     val = None
                     has_param = False
 
+            create_param = False
             if has_param:
                 if self._val is None:
                     self._existscallback(self._path)
-
                 if val != self._val:
                     self._changecallback(self._path, val)
                     self._val = val
+            elif self._create is not None:
+                with rosgobject.get_parameter_lock():
+                    rospy.set_param(self._path, self._create)
+                    create_param = True
+
+            if create_param:
+                self._log.info("set parameter %s to %r" % (self._path, self._create))
+                self._existscallback(self._path)
+                self._changecallback(self._path, self._create)
 
 class _ServiceThread(threading.Thread):
     def __init__(self, servicecls, servicename, freq, acqback, callback, errback):
@@ -223,12 +233,13 @@ class ParameterGObject(GObject.GObject):
 
     nodepath = None
 
-    def __init__(self, path):
+    def __init__(self, path, create=None):
         GObject.GObject.__init__(self)
         self.node = _ParameterPollThread(
                         path, freq=1.0,
                         existscallback=self._parameter_exists,
-                        changecallback=self._parameter_changed)
+                        changecallback=self._parameter_changed,
+                        create=create)
         self.nodepath = path
         self.node.start()
 
