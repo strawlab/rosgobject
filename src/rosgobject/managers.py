@@ -138,7 +138,8 @@ class ROSNodeManager(GObject.GObject):
             self._nodes = new_nodes
             self._topics = new_topics
 
-    def _random_node_name(self, N, prefix=""):
+    @staticmethod
+    def random_node_name(N, prefix=""):
         return prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(N))
 
     def has_topic(self, name):
