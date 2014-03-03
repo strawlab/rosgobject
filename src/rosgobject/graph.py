@@ -12,6 +12,11 @@ import rospy
 from gi.repository import Gtk, GLib
 
 class mpl:
+    import matplotlib
+    if not matplotlib.rcParams['datapath']:
+        if matplotlib.__file__.startswith('/usr/'):
+            matplotlib.rcParams['datapath'] = '/usr/share/matplotlib/mpl-data/'
+
     from matplotlib.figure import Figure
     from matplotlib.gridspec import GridSpec
     from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
@@ -182,12 +187,13 @@ class MultiPlotter(_Plotter):
         return True
 
 class Plotter(_Plotter):
-    def __init__(self, nodepath, msgclass, data_func=None, N=300, ymax=1.0, ymin=0.0, binning=1, dtype=np.float, freq=20, data_update_interval_us=1000000.0):
+    def __init__(self, nodepath, msgclass, data_func=None, data_attr=None, N=300, ymax=1.0, ymin=0.0, binning=1, dtype=np.float, freq=20, data_update_interval_us=1000000.0):
         _Plotter.__init__(self)
 
         self._N = int(N)
         self._bin = int(binning)
         self._dtype = dtype
+        self._data_attr = data_attr
         self._data_func = data_func or (lambda coll,msg: coll.update_data(msg.data))
 
         if N % self._bin != 0:
@@ -221,7 +227,10 @@ class Plotter(_Plotter):
         GLib.timeout_add(freq, self._update_data)
 
     def _cb(self, msg):
-        self._data_func(self.coll, msg)
+        if self._data_attr is not None:
+            self.coll.update_data(getattr(msg,self._data_attr))
+        else:
+            self._data_func(self.coll, msg)
 
     def _update_data(self):
         b = self.coll.get_data()

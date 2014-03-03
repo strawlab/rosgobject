@@ -39,6 +39,14 @@ class UI:
                 nodepath="/testnode/string",
                 msgclass=std_msgs.msg.String)
         self._add_widget(w)
+        w = GtkEntryTopicWidget(
+                nodepath="/testnode/float",
+                msgclass=std_msgs.msg.Float32)
+        self._add_widget(w)
+        w = GtkEntryTopicWidget(
+                nodepath="/testnode/int",
+                msgclass=std_msgs.msg.Int32)
+        self._add_widget(w)
 
         w = GtkEntryTopicWidget(
                 nodepath="/testnode/float",

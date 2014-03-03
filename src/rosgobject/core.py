@@ -2,10 +2,14 @@
 import roslib; roslib.load_manifest('rosgobject')
 import roslib.scriptutil
 import roslib.names
+import roslib.message
+import rosgraph.masterapi
 import rospy
 
+import xmlrpclib
 import logging
 import threading
+import socket
 import Queue
 import time
 import sys
@@ -55,6 +59,103 @@ def get_topic_type(topic):
             else:
                 time.sleep(0.1)
         return None, None, None
+
+
+## from rostopic.py
+##
+## does not require topics be published yet
+def _master_get_topic_types(master):
+    try:
+        val = master.getTopicTypes()
+    except xmlrpclib.Fault:
+        #TODO: remove, this is for 1.1
+        sys.stderr.write("WARNING: rostopic is being used against an older version of ROS/roscore\n")
+        val = master.getPublishedTopics('/')
+    return val
+
+
+def _get_topic_type_subscribers(error_callback, topic):
+    master = rosgraph.masterapi.Master('/rostopic')
+    try:
+        state = master.getSystemState()
+        pubs, subs, _ = state
+        topic_types = _master_get_topic_types(master)
+        subs = [x[0] for x in subs if x[0] == topic]
+        pubs = [x[0] for x in pubs if x[0] == topic]
+        topic_types = [x[1] for x in topic_types if x[0] == topic]
+    except socket.error:
+        error_callback("Could not communicate with master")
+
+    try:
+        return topic_types[0],subs[0]
+    except IndexError:
+        error_callback("Noone is subscribed to %s yet" % topic)
+
+## from rxplot
+##
+## requires topics to be published
+def parse_topics(error_callback, topics, nodename, published=True):
+
+    topic_list = []
+    range_list = []
+    for t in topics:
+        try:
+            sub_t,tmin,tmax = t.split(',')
+            tmin = float(tmin)
+            tmax = float(tmax)
+        except ValueError:
+            sub_t = t
+            tmin = 0
+            tmax = 1000
+
+        range_list.append( (tmin,tmax) )
+
+        c_topics = []
+        # check for shorthand '/foo/field1:field2:field3'
+        if ':' in sub_t:
+            base = sub_t[:sub_t.find(':')]
+            # the first prefix includes a field name, so save then strip it off
+            c_topics.append(base)
+            if not '/' in base:
+                error_callback("%s must contain a topic and field name"%sub_t)
+            base = base[:base.rfind('/')]
+
+            # compute the rest of the field names
+            fields = sub_t.split(':')[1:]
+            c_topics.extend(["%s/%s"%(base, f) for f in fields if f])
+        else:
+            c_topics.append(sub_t)
+
+        # #1053: resolve command-line topic names
+        c_topics = [roslib.scriptutil.script_resolve_name(nodename, n) for n in c_topics]
+
+        topic_list.extend(c_topics)
+
+    #flatten for printing
+    print_topic_list = []
+    for l in topic_list:
+        if type(l) == list:
+            print_topic_list.extend(l)
+        else:
+            print_topic_list.append(l)
+
+    #look up the list of classes
+    nodepaths, msgclasses, dataattrs = [],[],[]
+    for t in topic_list:
+        if published:
+            #look for published nodes and block if a node is not
+            #published
+            clsname,path,attr = get_topic_type(t)
+            dataattrs.append(attr[1:])
+        else:
+            #look for subscribed topics
+            clsname,path = _get_topic_type_subscribers(error_callback, t)
+            dataattrs.append('data')
+
+        nodepaths.append(path)
+        msgclasses.append(roslib.message.get_message_class(clsname))
+
+    return nodepaths, msgclasses, dataattrs, range_list
 
 class _ParameterPollThread(threading.Thread):
     def __init__(self, path, freq, existscallback, changecallback, create=None):

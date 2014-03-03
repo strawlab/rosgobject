@@ -15,7 +15,8 @@ from gi.repository import Gtk
 
 class UI:
     def __init__(self, parser, args):
-        self.nodepaths, self.msgclasses, self.dataattrs = self._parse_topics(parser, args.topics)
+        self.nodepaths, self.msgclasses, self.dataattrs, self.range_list = \
+                rosgobject.core.parse_topics(parser.error, args.topic, nodename='rxplot')
 
         self._w = Gtk.Window()
 
@@ -26,94 +27,78 @@ class UI:
 
     def _build_ui(self, args):
         vb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self._g = rosgobject.graph.MultiPlotter(
-                    self.nodepaths,
-                    self.msgclasses,
-                    data_attrs=self.dataattrs,
-                    ymax=args.ymax, ymin=args.ymin,
-                    N=args.time if args.time is not None else 10
-        )
-        self._g.ax.set_xlabel('time (s)')
 
-        nconds = len(self.nodepaths)
-        self._g.ax.legend(loc='upper right', numpoints=1,
-            columnspacing=0.05,
-            prop={'size':11} if nconds <= 4 else {'size':9},
-            ncol=1 if nconds <= 4 else 2
-        )
+        self._g = []
+        if args.separate:
+            for nodepath,msgclass,dataattr,datarange \
+                    in zip(self.nodepaths, self.msgclasses, self.dataattrs, self.range_list):
 
-        vb.pack_start(self._g, True, True, 0)
+                ymin,ymax = datarange
 
-        if args.time is None:
-            vb.pack_start(Gtk.Label("X Control"), False, False, 0)
-            vb.pack_start(self._g.xlabel_controller, False, False, 0)
+                _g = rosgobject.graph.Plotter(
+                            nodepath,
+                            msgclass,
+                            data_attr=dataattr,
+                            ymax=ymax, ymin=ymin,
+                            N=args.time if args.time is not None else 10
+                )
+                _g.ax.set_xlabel('time (s)')
+                self._g.append(_g)
+
+                nconds = 1
+                _g.ax.legend(loc='upper right', numpoints=1,
+                    columnspacing=0.05,
+                    prop={'size':11} if nconds <= 4 else {'size':9},
+                    ncol=1 if nconds <= 4 else 2
+                )
+
+        else:
+            ymin,ymax = self.range_list
+            ymax = max(ymax)
+            ymin = min(ymin)
+
+            _g = rosgobject.graph.MultiPlotter(
+                        self.nodepaths,
+                        self.msgclasses,
+                        data_attrs=self.dataattrs,
+                        ymax=ymax, ymin=ymin,
+                        N=args.time if args.time is not None else 10
+            )
+            _g.ax.set_xlabel('time (s)')
+            self._g.append(_g)
+
+            nconds = len(self.nodepaths)
+            _g.ax.legend(loc='upper right', numpoints=1,
+                columnspacing=0.05,
+                prop={'size':11} if nconds <= 4 else {'size':9},
+                ncol=1 if nconds <= 4 else 2
+            )
+
+        for _g in self._g:
+            vb.pack_start(_g, True, True, 0)
+
+            if args.time is None:
+                vb.pack_start(Gtk.Label("X Control"), False, False, 0)
+                vb.pack_start(_g.xlabel_controller, False, False, 0)
 
         self._w.add(vb)
-
-    def _parse_topics(self, parser, topics):
-
-        topic_list = []
-        for t in args.topics:
-            # c_topics is the list of topics to plot together
-            c_topics = []
-            # compute combined topic list, t == '/foo/bar1,/baz/bar2'
-            for sub_t in [x for x in t.split(',') if x]:
-                # check for shorthand '/foo/field1:field2:field3'
-                if ':' in sub_t:
-                    base = sub_t[:sub_t.find(':')]
-                    # the first prefix includes a field name, so save then strip it off
-                    c_topics.append(base)
-                    if not '/' in base:
-                        parser.error("%s must contain a topic and field name"%sub_t)
-                    base = base[:base.rfind('/')]
-
-                    # compute the rest of the field names
-                    fields = sub_t.split(':')[1:]
-                    c_topics.extend(["%s/%s"%(base, f) for f in fields if f])
-                else:
-                    c_topics.append(sub_t)
-
-            # #1053: resolve command-line topic names
-            c_topics = [roslib.scriptutil.script_resolve_name('rxplot', n) for n in c_topics]
-
-            topic_list.append(c_topics)
-
-        #flatten for printing
-        print_topic_list = []
-        for l in topic_list:
-            if type(l) == list:
-                print_topic_list.extend(l)
-            else:
-                print_topic_list.append(l)
-
-        #look up the list of classes
-        nodepaths, msgclasses, dataattrs = [],[],[]
-        for tl in topic_list:
-            for t in tl:
-                clsname,path,attr = rosgobject.core.get_topic_type(t)
-                nodepaths.append( path )
-                msgclasses.append( roslib.message.get_message_class(clsname) )
-                dataattrs.append(attr[1:])
-
-        return nodepaths, msgclasses, dataattrs
 
 if __name__ == "__main__":
     import traceback
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--ymin', type=float, default=0,
-        help='ymin value for plotting')
-    parser.add_argument(
-        '--ymax', type=float, default=1000,
-        help='ymax value for plotting')
-    parser.add_argument(
         '--time', type=float, default=None,
         help='amount of time in the past to show')
+    parser.add_argument(
+        '--separate', action='store_true', default=False,
+        help='put topics on separate plots')
 
     parser.add_argument(
-        'topics', nargs='+',
-        help='all topics on the same plot')
+        'topic', nargs='+',
+        help='topics to plot. the format is as follows: '\
+             '/topic_name/field_name (and an optional range specifier) '\
+             '/topic_name/field_name,ymin,ymax')
 
     argv = rospy.myargv()
     args = parser.parse_args(argv[1:])
