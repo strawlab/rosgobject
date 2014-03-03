@@ -146,14 +146,7 @@ class UI:
         self._add_widget(w)
 
 if __name__ == "__main__":
-    rospy.init_node("testgui", anonymous=True)
-    rosgobject.get_ros_thread() #ensure ros is spinning
-    rosgobject.add_console_logger()
-    try:
-        u = UI()
-        Gtk.main()
-    except:
-        rospy.logfatal("crash in UI:\n%s" % traceback.format_exc())
-    finally:
-        rosgobject.main_quit()
+    rosgobject.init_node("testgui", anonymous=True)
+    u = UI()
+    rosgobject.spin()
 
