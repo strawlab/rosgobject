@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+
+import roslib; roslib.load_manifest('rosgobject')
+import roslib.scriptutil
+import roslib.message
+import rospy
+
+import sys
+import argparse
+
+import rosgobject.core
+import rosgobject.wrappers
+
+from gi.repository import Gtk
+
+class UI:
+    def __init__(self, parser, args):
+        self.nodepaths, self.msgclasses, self.dataattrs, self.range_list = \
+                rosgobject.core.parse_topics(parser.error, args.topic, 'simpleconfig', published=False)
+
+        self._w = Gtk.Window()
+
+        self._build_ui(args)
+
+        self._w.connect("delete-event", rosgobject.main_quit)
+        self._w.show_all()
+
+    def _build_ui(self, args):
+        grid = Gtk.Grid(orientation=Gtk.Orientation.VERTICAL)
+
+        self.__widgets = []
+        for nodepath,msgclass,dataattr,datarange \
+                in zip(self.nodepaths, self.msgclasses, self.dataattrs, self.range_list):
+
+            ymin,ymax = datarange
+
+            step = round(abs(ymax-ymin)/200.0,1)
+
+            l = Gtk.Label(label=nodepath,xalign=0.0)
+            grid.add(l)
+
+            w = rosgobject.wrappers.GtkSpinButtonPublisherWidget(
+                    min=ymin,
+                    max=ymax,
+                    step=step,
+                    nodepath=nodepath,
+                    msgclass=msgclass,
+                    name=nodepath)
+            grid.attach_next_to(w.widget,l,
+                                Gtk.PositionType.RIGHT,
+                                1,1)
+            self.__widgets.append(w)
+
+        self._w.add(grid)
+
+if __name__ == "__main__":
+    import traceback
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'topic', nargs='+',
+        help='topics to plot. the format is as follows: '\
+             '/topic_name (and an optional range specifier) '\
+             '/topic_name/field_name,ymin,ymax')
+
+    argv = rospy.myargv()
+    args = parser.parse_args(argv[1:])
+
+    rospy.init_node("simpleconfig", anonymous=True)
+    rosgobject.get_ros_thread() #ensure ros is spinning
+    rosgobject.add_console_logger()
+    try:
+        u = UI(parser, args)
+        Gtk.main()
+    except:
+        rospy.logfatal("crash in UI:\n%s" % traceback.format_exc())
+    finally:
+        rosgobject.main_quit()
+
+
