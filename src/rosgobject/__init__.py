@@ -5,6 +5,7 @@ import rospy
 
 import logging
 import threading
+import traceback
 
 from gi.repository import GLib, Gtk, GObject, Gdk
 
