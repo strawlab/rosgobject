@@ -331,6 +331,11 @@ class GtkButtonStartNode(_MagicLabel):
 
     def __init__(self, widget=None, nodemanager=None, nodepath=None, package=None, node_type=None, name=None, **kwargs):
         assert nodemanager is not None
+
+        if not nodepath:
+            #assign a random node name
+            nodepath = nodemanager.random_node_name(10)
+
         self.nodepath = nodepath
         self.name = name or self.nodepath
         if widget is None:
