@@ -156,7 +156,7 @@ class ROSNodeManager(GObject.GObject):
         n = roslaunch.core.Node(
                 package=package,
                 node_type=node_type,
-                name=name or self._random_node_name(10, package),
+                name=name or self.random_node_name(10, package),
                 machine_name=machine_name or self._this_machine,
                 args=args,
                 env_args=env_args or [],
