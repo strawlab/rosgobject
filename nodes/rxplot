@@ -53,7 +53,8 @@ class UI:
                 )
 
         else:
-            ymin,ymax = self.range_list
+            ymin = [i[0] for i in self.range_list]
+            ymax = [i[1] for i in self.range_list]
             ymax = max(ymax)
             ymin = min(ymin)
 
