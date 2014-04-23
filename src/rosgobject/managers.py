@@ -14,6 +14,7 @@ import threading
 import logging
 import random
 import platform
+import socket
 
 from gi.repository import GObject
 
@@ -75,10 +76,23 @@ class ROSNodeManager(GObject.GObject):
                 except ValueError:
                     disappeared_nodes.append(n)
 
-            time.sleep(1)
-            pubs,subs,_ = self._mastertopic.getSystemState()
-            time.sleep(1)
-            topic_types = self._mastertopic.getTopicTypes()
+            got_ss = got_tt = False
+            while not (got_ss and got_tt):
+                if not got_ss:
+                    time.sleep(1)
+                    try:
+                        pubs,subs,_ = self._mastertopic.getSystemState()
+                        got_ss = True
+                    except socket.error:
+                        pass
+
+                if not got_tt:
+                    time.sleep(1)
+                    try:
+                        topic_types = self._mastertopic.getTopicTypes()
+                        got_tt = True
+                    except socket.error:
+                        pass
 
             topics = {}
             node_topics = {}
