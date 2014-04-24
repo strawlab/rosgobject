@@ -66,7 +66,15 @@ class ROSNodeManager(GObject.GObject):
 
         self._mastertopic = rosgraph.masterapi.Master('/rostopic')
         while 1:
-            nodes = rosnode.get_node_names(); new_nodes = nodes[:]
+            got_nn = False
+            while not got_nn:
+                try:
+                    nodes = rosnode.get_node_names()
+                    got_nn = True
+                except rosnode.ROSNodeException:
+                    time.sleep(1)
+
+            new_nodes = nodes[:]
             old_nodes = self._nodes[:]
             disappeared_nodes = []
 
