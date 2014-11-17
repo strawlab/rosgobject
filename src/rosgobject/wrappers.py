@@ -226,7 +226,10 @@ class GtkButtonSetServiceWidget(ServiceWidget):
         self.widget.connect("clicked", self._on_clicked)
 
     def _on_clicked(self, btn):
-        self.service_call()
+        if self.conv_func is not None:
+            self.service_call(self.conv_func())
+        else:
+            self.service_call()
 
 class GtkSpinButtonServiceWidget(ServiceWidget):
 
