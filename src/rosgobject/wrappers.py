@@ -212,6 +212,19 @@ class ServiceWidget(_MagicLabel):
         if self._label is not None:
             self._label.show_all()
 
+class GtkSwitchServiceWidget(ServiceWidget):
+
+    def __init__(self, nodepath, srvclass, **kwargs):
+        if "widget" not in kwargs:
+            kwargs.update(widget=Gtk.Switch())
+        gobj = ServiceGObject(srvclass, nodepath, 0.0)
+        ServiceWidget.__init__(self, gobj, **kwargs)
+        self.widget.connect("notify::active", self._on_clicked)
+
+    def _on_clicked(self, widget, sig):
+        val = self.conv_func(widget.props.active) if self.conv_func is not None else widget.props.active
+        self.service_call(val)
+
 class GtkButtonSetServiceWidget(ServiceWidget):
 
     def __init__(self, nodepath, srvclass, **kwargs):
