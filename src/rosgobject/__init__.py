@@ -68,7 +68,9 @@ def init_node(*args, **kwargs):
 
 def spin():
     try:
+        Gdk.threads_enter()
         Gtk.main()
+        Gdk.threads_leave()
     except:
         rospy.logfatal("crash in UI:\n%s" % traceback.format_exc())
     finally:
