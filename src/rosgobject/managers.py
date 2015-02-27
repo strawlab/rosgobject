@@ -54,8 +54,12 @@ class ROSNodeManager(GObject.GObject):
         self._thread.daemon = True
         self._thread.start()
 
-        self._launch = roslaunch.scriptapi.ROSLaunch()
-        self._launch.start()
+        try:
+            self._launch = roslaunch.scriptapi.ROSLaunch()
+            self._launch.start()
+        except:
+            self._log.error("Could not start roslaunch manager")
+            self._launch = None
 
     def _thread_func(self):
         def topic_type(t, topic_types):
@@ -193,7 +197,8 @@ class ROSNodeManager(GObject.GObject):
             self._log.info("Setting ROS param: %s = %s" % (k, v))
             rospy.set_param(k,v)
 
-        self._launch.launch(n)
+        if self._launch is not None:
+            self._launch.launch(n)
 
     def find_topic(self, topic_type='sensor_msgs/Image'):
         return rostopic.find_by_type(topic_type)
