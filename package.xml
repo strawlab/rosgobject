@@ -1,0 +1,24 @@
+<package>
+  <name>rosgobject</name>
+  <version>0.0.1</version>
+  <license>BSD</license>
+  <description>
+     rosgobject
+  </description>
+  <author>John Stowers</author>
+  <maintainer email="strawman@astraw.com">Andrew Straw</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>message_runtime</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>std_srvs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>rosgraph_msgs</run_depend>
+
+  <run_depend>python-gobject-introspection</run_depend>
+  <run_depend>gir1.2-gtk-3.0</run_depend>
+
+</package>
+
+
